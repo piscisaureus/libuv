@@ -442,17 +442,27 @@ static int uv__rwlock_fallback_tryrdlock(uv_rwlock_t* rwlock) {
   if (!TryEnterCriticalSection(&rwlock->fallback_.read_lock_.cs))
     return UV_EAGAIN;
 
-  err = 0;
   if (rwlock->fallback_.num_readers_ == 0) {
+    /* Currently there are no other readers, which means that the write lock
+     * needs to be acquired.
+     */
     DWORD r = WaitForSingleObject(rwlock->fallback_.write_lock_.sem, 0);
-    if (r == WAIT_OBJECT_0)
+    if (r == WAIT_OBJECT_0) {
       rwlock->fallback_.num_readers_++;
-    else if (r == WAIT_TIMEOUT)
+      err = 0;
+    } else if (r == WAIT_TIMEOUT)
       err = UV_EAGAIN;
     else if (r == WAIT_FAILED)
       err = uv_translate_sys_error(GetLastError());
     else
       err = UV_EIO;
+
+  } else {
+    /* The write lock has already been acquired because there are other
+     * active readers.
+     */
+    rwlock->fallback_.num_readers_++;
+    err = 0;
   }
 
   LeaveCriticalSection(&rwlock->fallback_.read_lock_.cs);
