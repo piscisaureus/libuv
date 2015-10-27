@@ -89,6 +89,12 @@ static void exit_cb(uv_process_t* process,
                     int term_signal) {
   printf("exit_cb\n");
   exit_cb_called++;
+
+  // TEMP https://github.com/libuv/libuv/pull/540
+  if (exit_status != 0) {
+	  printf("exit_status: %d\n", exit_status);
+  }
+
   ASSERT(exit_status == 0);
   uv_close((uv_handle_t*)process, NULL);
 }

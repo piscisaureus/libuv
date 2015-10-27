@@ -233,6 +233,12 @@ static void read_cb(uv_stream_t* handle,
 
   pipe = (uv_pipe_t*) handle;
   ASSERT(pipe == &ctx2.channel);
+
+  // TEMP https://github.com/libuv/libuv/pull/540
+  if (nread < 0) {
+	  printf("read_cb: %d", nread);
+  }
+
   ASSERT(nread >= 0);
   ASSERT(1 == uv_pipe_pending_count(pipe));
 
