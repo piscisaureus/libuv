@@ -172,7 +172,7 @@ $ make install
 To build with [CMake](https://cmake.org/):
 
 ```bash
-$ mkdir -p build ; cd build ; cmake -DBUILD_TESTING=ON ..
+$ mkdir -p out/cmake ; cd out/cmake ; cmake -DBUILD_TESTING=ON ../..
 $ make test
 # Or manually:
 $ ./uv_run_tests    # shared library build
