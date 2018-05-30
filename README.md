@@ -169,6 +169,16 @@ $ make check
 $ make install
 ```
 
+To build with [CMake](https://cmake.org/):
+
+```bash
+$ mkdir -p build ; cd build ; cmake -DBUILD_TESTING=ON ..
+$ make test
+# Or manually:
+$ ./uv_run_tests    # shared library build
+$ ./uv_run_tests_a  # static library build
+```
+
 To build with GYP, first run:
 
 ```bash
