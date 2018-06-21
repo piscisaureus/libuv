@@ -46,15 +46,15 @@
 
 #define UNICODE_REPLACEMENT_CHARACTER (0xfffd)
 
-#define ANSI_NORMAL           0x00
-#define ANSI_ESCAPE_SEEN      0x02
-#define ANSI_CSI              0x04
-#define ANSI_ST_CONTROL       0x08
-#define ANSI_IGNORE           0x10
-#define ANSI_IN_ARG           0x20
-#define ANSI_IN_STRING        0x40
-#define ANSI_BACKSLASH_SEEN   0x80
-#define ANSI_EXTENSION        0x100
+#define ANSI_NORMAL           0x0000
+#define ANSI_ESCAPE_SEEN      0x0002
+#define ANSI_CSI              0x0004
+#define ANSI_ST_CONTROL       0x0008
+#define ANSI_IGNORE           0x0010
+#define ANSI_IN_ARG           0x0020
+#define ANSI_IN_STRING        0x0040
+#define ANSI_BACKSLASH_SEEN   0x0080
+#define ANSI_EXTENSION        0x0100
 
 #define MAX_INPUT_BUFFER_LENGTH 8192
 #define MAX_CONSOLE_CHAR 8192
