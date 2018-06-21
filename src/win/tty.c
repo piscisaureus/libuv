@@ -1635,7 +1635,8 @@ static int uv_tty_set_cursor_visibility(uv_tty_t* handle,
 }
 
 static int uv_tty_set_cursor_shape(uv_tty_t* handle,
-                                        DWORD* error) {
+                                   int style,
+                                   DWORD* error) {
   CONSOLE_CURSOR_INFO cursor_info;
 
   if (!GetConsoleCursorInfo(handle->handle, &cursor_info)) {
@@ -1643,7 +1644,7 @@ static int uv_tty_set_cursor_shape(uv_tty_t* handle,
     return -1;
   }
 
-  if (handle->tty.wr.ansi_csi_argv[0] <= 2) {
+  if (style <= 2) {
     cursor_info.dwSize = CURSOR_SIZE_LARGE;
   } else {
     cursor_info.dwSize = CURSOR_SIZE_SMALL;
@@ -2085,7 +2086,7 @@ static int uv_tty_write_bufs(uv_tty_t* handle,
               d = handle->tty.wr.ansi_csi_argc ? handle->tty.wr.ansi_csi_argv[0] : 0;
               if (d >= 0 && d <= 6) {
                 FLUSH_TEXT();
-                uv_tty_set_cursor_shape(handle, error);
+                uv_tty_set_cursor_shape(handle, d, error);
               }
             }
 
