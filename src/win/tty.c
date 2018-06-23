@@ -1699,7 +1699,7 @@ static int uv_tty_write_bufs(uv_tty_t* handle,
   unsigned char utf8_bytes_left = handle->tty.wr.utf8_bytes_left;
   unsigned int utf8_codepoint = handle->tty.wr.utf8_codepoint;
   unsigned char previous_eol = handle->tty.wr.previous_eol;
-  unsigned char ansi_parser_state = handle->tty.wr.ansi_parser_state;
+  unsigned short ansi_parser_state = handle->tty.wr.ansi_parser_state;
 
   /* Store the error here. If we encounter an error, stop trying to do i/o but
    * keep parsing the buffer so we leave the parser in a consistent state. */
