@@ -395,4 +395,14 @@ void uv__wake_all_loops(void);
  */
 void uv__init_detect_system_wakeup(void);
 
+/* Set uv__vterm_state reggardless of console type private function for */
+/* testing */
+typedef enum {
+  UV_SUPPORTED,
+  UV_UNCHECKED,
+  UV_UNSUPPORTED
+} uv__vtermstate_t;
+
+void uv__set_vterm_state(uv__vtermstate_t state);
+
 #endif /* UV_WIN_INTERNAL_H_ */

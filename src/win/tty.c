@@ -154,13 +154,8 @@ static char uv_tty_default_inverse = 0;
 
 static CONSOLE_CURSOR_INFO uv_tty_default_cursor_info;
 
-typedef enum {
-  UV_SUPPORTED,
-  UV_UNCHECKED,
-  UV_UNSUPPORTED
-} uv_vtermstate_t;
 /* Determine whether or not ANSI support is enabled. */
-static uv_vtermstate_t uv__vterm_state = UV_UNCHECKED;
+static uv__vtermstate_t uv__vterm_state = UV_UNCHECKED;
 static void uv__determine_vterm_state(HANDLE handle);
 
 void uv_console_init(void) {
@@ -2379,6 +2374,10 @@ static void uv__determine_vterm_state(HANDLE handle) {
   }
 
   uv__vterm_state = UV_SUPPORTED;
+}
+
+void uv__set_vterm_state(uv__vtermstate_t state) {
+  uv__vterm_state = state;
 }
 
 static DWORD WINAPI uv__tty_console_resize_message_loop_thread(void* param) {
