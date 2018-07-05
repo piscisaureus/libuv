@@ -1874,7 +1874,7 @@ static int uv_tty_write_bufs(uv_tty_t* handle,
               if (utf8_codepoint == 'q' &&
                   !(ansi_parser_state & ANSI_EXTENSION)) {
                 /* Change the cursor shape */
-                style = handle->tty.wr.ansi_csi_argc ? handle->tty.wr.ansi_csi_argv[0] : 0;
+                style = handle->tty.wr.ansi_csi_argc ? handle->tty.wr.ansi_csi_argv[0] : 1;
                 if (style >= 0 && style <= 6) {
                   FLUSH_TEXT();
                   uv_tty_set_cursor_shape(handle, style, error);
