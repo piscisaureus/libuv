@@ -1640,7 +1640,9 @@ static int uv_tty_set_cursor_shape(uv_tty_t* handle,
     return -1;
   }
 
-  if (style <= 2) {
+  if ( style == 0 ) {
+    cursor_info.dwSize = uv_tty_default_cursor_info.dwSize;
+  } else if (style <= 2) {
     cursor_info.dwSize = CURSOR_SIZE_LARGE;
   } else {
     cursor_info.dwSize = CURSOR_SIZE_SMALL;
