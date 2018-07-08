@@ -200,7 +200,9 @@ static void clear_screen(uv_tty_t *tty_out, struct screen_info *si) {
 
 static void free_screen(struct captured_screen *cs) {
   free(cs->text);
+  cs->text = NULL;
   free(cs->attributes);
+  cs->attributes = NULL;
 }
 
 static void capture_screen(uv_tty_t *tty_out, struct captured_screen *cs) {
@@ -290,6 +292,10 @@ static BOOL compare_screen(uv_tty_t *tty_out,
   int line, col;
   BOOL result = TRUE;
   int current = 0;
+  ASSERT(actual->text);
+  ASSERT(actual->attributes);
+  ASSERT(expect->text);
+  ASSERT(expect->attributes);
   if (actual->si.length != expect->si.length) {
     return FALSE;
   }
@@ -820,8 +826,7 @@ TEST_IMPL(tty_erase) {
   uv_loop_t* loop;
   COORD cursor_pos;
   char buffer[1024];
-  struct captured_screen actual;
-  struct captured_screen expect;
+  struct captured_screen actual = { 0 }, expect = { 0 };
 
   loop = uv_default_loop();
 
@@ -895,8 +900,7 @@ TEST_IMPL(tty_erase_line) {
   uv_loop_t* loop;
   COORD cursor_pos;
   char buffer[1024];
-  struct captured_screen actual;
-  struct captured_screen expect;
+  struct captured_screen actual = { 0 }, expect = { 0 };
 
   loop = uv_default_loop();
 
@@ -1027,8 +1031,7 @@ TEST_IMPL(tty_set_style) {
   uv_loop_t* loop;
   COORD cursor_pos;
   char buffer[1024];
-  struct captured_screen actual;
-  struct captured_screen expect;
+  struct captured_screen actual = { 0 }, expect = { 0 };
   WORD fg, bg;
   WORD fg_attrs[9][2] = {
     {F_BLACK, FOREGROUND_BLACK},
@@ -1261,7 +1264,7 @@ TEST_IMPL(tty_full_reset) {
   uv_tty_t tty_out;
   uv_loop_t* loop;
   char buffer[1024];
-  struct captured_screen actual, expect;
+  struct captured_screen actual = { 0 }, expect = { 0 };
   COORD cursor_pos;
   DWORD saved_cursor_size;
   BOOL saved_cursor_visibility;
@@ -1306,8 +1309,7 @@ TEST_IMPL(tty_escape_sequence_processing) {
   COORD cursor_pos, cursor_pos_old;
   DWORD saved_cursor_size;
   char buffer[1024];
-  struct captured_screen actual;
-  struct captured_screen expect;
+  struct captured_screen actual = { 0 }, expect = { 0 };
   int dir;
 
   loop = uv_default_loop();
