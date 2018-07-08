@@ -2379,7 +2379,9 @@ static void uv__determine_vterm_state(HANDLE handle) {
 }
 
 void uv__set_vterm_state(uv__vtermstate_t state) {
+  uv_sem_wait(&uv_tty_output_lock);
   uv__vterm_state = state;
+  uv_sem_post(&uv_tty_output_lock);
 }
 
 static DWORD WINAPI uv__tty_console_resize_message_loop_thread(void* param) {
