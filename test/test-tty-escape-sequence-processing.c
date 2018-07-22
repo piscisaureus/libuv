@@ -19,14 +19,14 @@
  * IN THE SOFTWARE.
  */
 
-#include "uv.h"
 #include "task.h"
+#include "uv.h"
 
 #include <io.h>
 #include <windows.h>
 
-#include <string.h>
 #include <errno.h>
+#include <string.h>
 
 #include "../src/win/internal.h"
 
@@ -88,12 +88,12 @@ struct screen_info {
 };
 
 struct captured_screen {
-  char *text;
-  WORD *attributes;
+  char* text;
+  WORD* attributes;
   struct screen_info si;
 };
 
-static void get_screen_info(uv_tty_t *tty_out, struct screen_info *si) {
+static void get_screen_info(uv_tty_t* tty_out, struct screen_info* si) {
   ASSERT(GetConsoleScreenBufferInfo(tty_out->handle, &(si->csbi)));
   si->width = si->csbi.dwSize.X;
   si->height = si->csbi.srWindow.Bottom - si->csbi.srWindow.Top + 1;
@@ -102,7 +102,7 @@ static void get_screen_info(uv_tty_t *tty_out, struct screen_info *si) {
   si->top = si->csbi.srWindow.Top;
 }
 
-static void set_cursor_position(uv_tty_t *tty_out, COORD pos) {
+static void set_cursor_position(uv_tty_t* tty_out, COORD pos) {
   HANDLE handle = tty_out->handle;
   CONSOLE_SCREEN_BUFFER_INFO info;
   ASSERT(GetConsoleScreenBufferInfo(handle, &info));
@@ -111,7 +111,7 @@ static void set_cursor_position(uv_tty_t *tty_out, COORD pos) {
   ASSERT(SetConsoleCursorPosition(handle, pos));
 }
 
-static void get_cursor_position(uv_tty_t *tty_out, COORD *cursor_position) {
+static void get_cursor_position(uv_tty_t* tty_out, COORD* cursor_position) {
   HANDLE handle = tty_out->handle;
   CONSOLE_SCREEN_BUFFER_INFO info;
   ASSERT(GetConsoleScreenBufferInfo(handle, &info));
@@ -119,45 +119,45 @@ static void get_cursor_position(uv_tty_t *tty_out, COORD *cursor_position) {
   cursor_position->Y = info.dwCursorPosition.Y - info.srWindow.Top + 1;
 }
 
-static void set_cursor_to_home(uv_tty_t *tty_out) {
+static void set_cursor_to_home(uv_tty_t* tty_out) {
   COORD origin = {1, 1};
   set_cursor_position(tty_out, origin);
 }
 
-static CONSOLE_CURSOR_INFO get_cursor_info(uv_tty_t *tty_out) {
+static CONSOLE_CURSOR_INFO get_cursor_info(uv_tty_t* tty_out) {
   HANDLE handle = tty_out->handle;
   CONSOLE_CURSOR_INFO info;
   ASSERT(GetConsoleCursorInfo(handle, &info));
   return info;
 }
 
-static void set_cursor_size(uv_tty_t *tty_out, DWORD size) {
+static void set_cursor_size(uv_tty_t* tty_out, DWORD size) {
   CONSOLE_CURSOR_INFO info = get_cursor_info(tty_out);
   info.dwSize = size;
   ASSERT(SetConsoleCursorInfo(tty_out->handle, &info));
 }
 
-static DWORD get_cursor_size(uv_tty_t *tty_out) {
+static DWORD get_cursor_size(uv_tty_t* tty_out) {
   return get_cursor_info(tty_out).dwSize;
 }
 
-static void set_cursor_visibility(uv_tty_t *tty_out, BOOL visible) {
+static void set_cursor_visibility(uv_tty_t* tty_out, BOOL visible) {
   CONSOLE_CURSOR_INFO info = get_cursor_info(tty_out);
   info.bVisible = visible;
   ASSERT(SetConsoleCursorInfo(tty_out->handle, &info));
 }
 
-static BOOL get_cursor_visibility(uv_tty_t *tty_out) {
+static BOOL get_cursor_visibility(uv_tty_t* tty_out) {
   return get_cursor_info(tty_out).bVisible;
 }
 
-static BOOL is_scrolling(uv_tty_t *tty_out, struct screen_info si) {
+static BOOL is_scrolling(uv_tty_t* tty_out, struct screen_info si) {
   CONSOLE_SCREEN_BUFFER_INFO info;
   ASSERT(GetConsoleScreenBufferInfo(tty_out->handle, &info));
   return info.srWindow.Top != si.top;
 }
 
-static void write_console(uv_tty_t *tty_out, char *src) {
+static void write_console(uv_tty_t* tty_out, char* src) {
   int r;
   uv_buf_t buf;
 
@@ -166,10 +166,10 @@ static void write_console(uv_tty_t *tty_out, char *src) {
 
   r = uv_try_write((uv_stream_t*) tty_out, &buf, 1);
   ASSERT(r >= 0);
-  ASSERT((unsigned int)r == buf.len);
+  ASSERT((unsigned int) r == buf.len);
 }
 
-static void setup_screen(uv_tty_t *tty_out) {
+static void setup_screen(uv_tty_t* tty_out) {
   DWORD length, number_of_written;
   COORD origin;
   CONSOLE_SCREEN_BUFFER_INFO info;
@@ -177,12 +177,12 @@ static void setup_screen(uv_tty_t *tty_out) {
   length = info.dwSize.X * (info.srWindow.Bottom - info.srWindow.Top + 1);
   origin.X = 0;
   origin.Y = info.srWindow.Top;
-  ASSERT(FillConsoleOutputCharacter(tty_out->handle, '.', length, origin,
-        &number_of_written));
+  ASSERT(FillConsoleOutputCharacter(
+      tty_out->handle, '.', length, origin, &number_of_written));
   ASSERT(length == number_of_written);
 }
 
-static void clear_screen(uv_tty_t *tty_out, struct screen_info *si) {
+static void clear_screen(uv_tty_t* tty_out, struct screen_info* si) {
   DWORD length, number_of_written;
   COORD origin;
   CONSOLE_SCREEN_BUFFER_INFO info;
@@ -190,42 +190,44 @@ static void clear_screen(uv_tty_t *tty_out, struct screen_info *si) {
   length = (info.srWindow.Bottom - info.srWindow.Top + 1) * info.dwSize.X - 1;
   origin.X = 0;
   origin.Y = info.srWindow.Top;
-  FillConsoleOutputCharacterA(tty_out->handle, ' ', length, origin,
-      &number_of_written);
+  FillConsoleOutputCharacterA(
+      tty_out->handle, ' ', length, origin, &number_of_written);
   ASSERT(length == number_of_written);
-  FillConsoleOutputAttribute(tty_out->handle, si->default_attr, length, origin,
-      &number_of_written);
+  FillConsoleOutputAttribute(
+      tty_out->handle, si->default_attr, length, origin, &number_of_written);
   ASSERT(length == number_of_written);
 }
 
-static void free_screen(struct captured_screen *cs) {
+static void free_screen(struct captured_screen* cs) {
   free(cs->text);
   cs->text = NULL;
   free(cs->attributes);
   cs->attributes = NULL;
 }
 
-static void capture_screen(uv_tty_t *tty_out, struct captured_screen *cs) {
+static void capture_screen(uv_tty_t* tty_out, struct captured_screen* cs) {
   DWORD length;
   COORD origin;
   get_screen_info(tty_out, &(cs->si));
   origin.X = 0;
   origin.Y = cs->si.csbi.srWindow.Top;
-  cs->text = (char *)malloc(cs->si.length * sizeof(*cs->text));
-  cs->attributes = (WORD *)malloc(cs->si.length * sizeof(*cs->attributes));
-  ASSERT(ReadConsoleOutputCharacter(tty_out->handle, cs->text, cs->si.length,
-        origin, &length));
-  ASSERT((unsigned int)cs->si.length == length);
-  ASSERT(ReadConsoleOutputAttribute(tty_out->handle, cs->attributes,
-        cs->si.length, origin, &length));
-  ASSERT((unsigned int)cs->si.length == length);
+  cs->text = (char*) malloc(cs->si.length * sizeof(*cs->text));
+  cs->attributes = (WORD*) malloc(cs->si.length * sizeof(*cs->attributes));
+  ASSERT(ReadConsoleOutputCharacter(
+      tty_out->handle, cs->text, cs->si.length, origin, &length));
+  ASSERT((unsigned int) cs->si.length == length);
+  ASSERT(ReadConsoleOutputAttribute(
+      tty_out->handle, cs->attributes, cs->si.length, origin, &length));
+  ASSERT((unsigned int) cs->si.length == length);
 }
 
-static void make_expect_screen_erase(struct captured_screen *cs,
-    COORD cursor_position, int dir, BOOL entire_screen) {
+static void make_expect_screen_erase(struct captured_screen* cs,
+                                     COORD cursor_position,
+                                     int dir,
+                                     BOOL entire_screen) {
   /* beginning of line */
-  char *start = cs->text + cs->si.width * (cursor_position.Y - 1);
-  char *end;
+  char* start = cs->text + cs->si.width * (cursor_position.Y - 1);
+  char* end;
   if (dir == 0) {
     if (entire_screen) {
       /* erase to end of screen */
@@ -258,37 +260,41 @@ static void make_expect_screen_erase(struct captured_screen *cs,
   }
   ASSERT(start < end);
   ASSERT(end - cs->text <= cs->si.length);
-  for (; start < end ; start++) {
+  for (; start < end; start++) {
     *start = ' ';
   }
 }
 
-static void make_expect_screen_write(struct captured_screen *cs,
-    COORD cursor_position, const char *text) {
+static void make_expect_screen_write(struct captured_screen* cs,
+                                     COORD cursor_position,
+                                     const char* text) {
   /* postion of cursor */
-  char *start = cs->text + cs->si.width * (cursor_position.Y - 1) +
-    cursor_position.X - 1;
+  char* start = cs->text + cs->si.width * (cursor_position.Y - 1) +
+                cursor_position.X - 1;
   size_t length = strlen(text);
   size_t remain_length = cs->si.length - (cs->text - start);
   length = length > remain_length ? remain_length : length;
   memcpy(start, text, length);
 }
 
-static void make_expect_screen_set_attr(struct captured_screen *cs,
-    COORD cursor_position, size_t length, WORD attr) {
-  WORD *start = cs->attributes + cs->si.width * (cursor_position.Y - 1) +
-    cursor_position.X - 1;
+static void make_expect_screen_set_attr(struct captured_screen* cs,
+                                        COORD cursor_position,
+                                        size_t length,
+                                        WORD attr) {
+  WORD* start = cs->attributes + cs->si.width * (cursor_position.Y - 1) +
+                cursor_position.X - 1;
   size_t remain_length = cs->si.length - (cs->attributes - start);
   length = length > remain_length ? remain_length : length;
-  while(length) {
+  while (length) {
     *start = attr;
     start++;
     length--;
   }
 }
 
-static BOOL compare_screen(uv_tty_t *tty_out,
-    struct captured_screen *actual, struct captured_screen *expect) {
+static BOOL compare_screen(uv_tty_t* tty_out,
+                           struct captured_screen* actual,
+                           struct captured_screen* expect) {
   int line, col;
   BOOL result = TRUE;
   int current = 0;
@@ -305,20 +311,27 @@ static BOOL compare_screen(uv_tty_t *tty_out,
   if (actual->si.height != expect->si.height) {
     return FALSE;
   }
-  while(current < actual->si.length) {
+  while (current < actual->si.length) {
     if (*(actual->text + current) != *(expect->text + current)) {
       line = current / actual->si.width + 1;
       col = current - actual->si.width * (line - 1) + 1;
-      fprintf(stderr, "line:%d col:%d expected character '%c' but found '%c'\n",
-          line, col, *(expect->text + current), *(actual->text + current));
+      fprintf(stderr,
+              "line:%d col:%d expected character '%c' but found '%c'\n",
+              line,
+              col,
+              *(expect->text + current),
+              *(actual->text + current));
       result = FALSE;
     }
     if (*(actual->attributes + current) != *(expect->attributes + current)) {
       line = current / actual->si.width + 1;
       col = current - actual->si.width * (line - 1) + 1;
-      fprintf(stderr, "line:%d col:%d expected attributes '%u' but found '%u'\n",
-          line, col,
-          *(expect->attributes + current), *(actual->attributes + current));
+      fprintf(stderr,
+              "line:%d col:%d expected attributes '%u' but found '%u'\n",
+              line,
+              col,
+              *(expect->attributes + current),
+              *(actual->attributes + current));
       result = FALSE;
     }
     current++;
@@ -329,7 +342,7 @@ static BOOL compare_screen(uv_tty_t *tty_out,
   return result;
 }
 
-static void initialize_tty(uv_tty_t *tty_out) {
+static void initialize_tty(uv_tty_t* tty_out) {
   int r;
   int ttyout_fd;
   /* Make sure we have an FD that refers to a tty */
@@ -337,24 +350,23 @@ static void initialize_tty(uv_tty_t *tty_out) {
 
   uv__set_vterm_state(UV_UNSUPPORTED);
 
-  handle = CreateConsoleScreenBuffer(
-                       GENERIC_READ | GENERIC_WRITE,
-                       FILE_SHARE_READ | FILE_SHARE_WRITE,
-                       NULL,
-                       CONSOLE_TEXTMODE_BUFFER,
-                       NULL);
+  handle = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE,
+                                     FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                     NULL,
+                                     CONSOLE_TEXTMODE_BUFFER,
+                                     NULL);
   ASSERT(handle != INVALID_HANDLE_VALUE);
 
   ttyout_fd = _open_osfhandle((intptr_t) handle, 0);
   ASSERT(ttyout_fd >= 0);
   ASSERT(UV_TTY == uv_guess_handle(ttyout_fd));
-  r = uv_tty_init(uv_default_loop(), tty_out, ttyout_fd, 0);  /* Writable. */
+  r = uv_tty_init(uv_default_loop(), tty_out, ttyout_fd, 0); /* Writable. */
   ASSERT(r == 0);
 }
 
-static void terminate_tty(uv_tty_t *tty_out) {
+static void terminate_tty(uv_tty_t* tty_out) {
   set_cursor_to_home(tty_out);
-  uv_close((uv_handle_t*)tty_out, NULL);
+  uv_close((uv_handle_t*) tty_out, NULL);
   FreeConsole();
 }
 
@@ -701,21 +713,21 @@ TEST_IMPL(tty_cursor_horizontal_move_absolute) {
   set_cursor_position(&tty_out, cursor_pos_old);
 
   /* Move to beginning of line if omitted argument */
-  snprintf(buffer, sizeof(buffer),"%sG", CSI);
+  snprintf(buffer, sizeof(buffer), "%sG", CSI);
   write_console(&tty_out, buffer);
   get_cursor_position(&tty_out, &cursor_pos);
   ASSERT(1 == cursor_pos.X);
   ASSERT(cursor_pos_old.Y == cursor_pos.Y);
 
   /* Move cursor to nth character */
-  snprintf(buffer, sizeof(buffer),"%s%dG", CSI, si.width / 4);
+  snprintf(buffer, sizeof(buffer), "%s%dG", CSI, si.width / 4);
   write_console(&tty_out, buffer);
   get_cursor_position(&tty_out, &cursor_pos);
   ASSERT(si.width / 4 == cursor_pos.X);
   ASSERT(cursor_pos_old.Y == cursor_pos.Y);
 
   /* Moving out of screen will fit within screen */
-  snprintf(buffer, sizeof(buffer),"%s%dG", CSI, si.width + 1);
+  snprintf(buffer, sizeof(buffer), "%s%dG", CSI, si.width + 1);
   write_console(&tty_out, buffer);
   get_cursor_position(&tty_out, &cursor_pos);
   ASSERT(si.width == cursor_pos.X);
@@ -747,30 +759,30 @@ TEST_IMPL(tty_cursor_move_absolute) {
   set_cursor_position(&tty_out, cursor_pos);
 
   /* Move the cursor to home if omitted arguments */
-  snprintf(buffer, sizeof(buffer),"%sH", CSI);
+  snprintf(buffer, sizeof(buffer), "%sH", CSI);
   write_console(&tty_out, buffer);
   get_cursor_position(&tty_out, &cursor_pos);
   ASSERT(1 == cursor_pos.X);
   ASSERT(1 == cursor_pos.Y);
 
   /* Move the cursor to the middle of the screen */
-  snprintf(buffer, sizeof(buffer), "%s%d;%df",
-      CSI, si.height / 2, si.width / 2);
+  snprintf(
+      buffer, sizeof(buffer), "%s%d;%df", CSI, si.height / 2, si.width / 2);
   write_console(&tty_out, buffer);
   get_cursor_position(&tty_out, &cursor_pos);
   ASSERT(si.width / 2 == cursor_pos.X);
   ASSERT(si.height / 2 == cursor_pos.Y);
 
   /* Moving out of screen will fit within screen */
-  snprintf(buffer, sizeof(buffer), "%s%d;%df",
-      CSI, si.height / 2, si.width + 1);
+  snprintf(
+      buffer, sizeof(buffer), "%s%d;%df", CSI, si.height / 2, si.width + 1);
   write_console(&tty_out, buffer);
   get_cursor_position(&tty_out, &cursor_pos);
   ASSERT(si.width == cursor_pos.X);
   ASSERT(si.height / 2 == cursor_pos.Y);
 
-  snprintf(buffer, sizeof(buffer), "%s%d;%df",
-      CSI, si.height + 1, si.width / 2);
+  snprintf(
+      buffer, sizeof(buffer), "%s%d;%df", CSI, si.height + 1, si.width / 2);
   write_console(&tty_out, buffer);
   get_cursor_position(&tty_out, &cursor_pos);
   ASSERT(si.width / 2 == cursor_pos.X);
@@ -821,12 +833,12 @@ TEST_IMPL(tty_hide_show_cursor) {
 
 
 TEST_IMPL(tty_erase) {
-  int  dir;
+  int dir;
   uv_tty_t tty_out;
   uv_loop_t* loop;
   COORD cursor_pos;
   char buffer[1024];
-  struct captured_screen actual = { 0 }, expect = { 0 };
+  struct captured_screen actual = {0}, expect = {0};
 
   loop = uv_default_loop();
 
@@ -895,12 +907,12 @@ TEST_IMPL(tty_erase) {
 
 
 TEST_IMPL(tty_erase_line) {
-  int  dir;
+  int dir;
   uv_tty_t tty_out;
   uv_loop_t* loop;
   COORD cursor_pos;
   char buffer[1024];
-  struct captured_screen actual = { 0 }, expect = { 0 };
+  struct captured_screen actual = {0}, expect = {0};
 
   loop = uv_default_loop();
 
@@ -1031,30 +1043,26 @@ TEST_IMPL(tty_set_style) {
   uv_loop_t* loop;
   COORD cursor_pos;
   char buffer[1024];
-  struct captured_screen actual = { 0 }, expect = { 0 };
+  struct captured_screen actual = {0}, expect = {0};
   WORD fg, bg;
-  WORD fg_attrs[9][2] = {
-    {F_BLACK, FOREGROUND_BLACK},
-    {F_RED, FOREGROUND_RED},
-    {F_GREEN, FOREGROUND_GREEN},
-    {F_YELLOW, FOREGROUND_YELLOW},
-    {F_BLUE, FOREGROUND_BLUE},
-    {F_MAGENTA, FOREGROUND_MAGENTA},
-    {F_CYAN, FOREGROUND_CYAN},
-    {F_WHITE, FOREGROUND_WHITE},
-    {F_DEFAULT, 0}
-  };
-  WORD bg_attrs[9][2] = {
-    {B_DEFAULT, 0},
-    {B_BLACK, BACKGROUND_BLACK},
-    {B_RED, BACKGROUND_RED},
-    {B_GREEN, BACKGROUND_GREEN},
-    {B_YELLOW, BACKGROUND_YELLOW},
-    {B_BLUE, BACKGROUND_BLUE},
-    {B_MAGENTA, BACKGROUND_MAGENTA},
-    {B_CYAN, BACKGROUND_CYAN},
-    {B_WHITE, BACKGROUND_WHITE}
-  };
+  WORD fg_attrs[9][2] = {{F_BLACK, FOREGROUND_BLACK},
+                         {F_RED, FOREGROUND_RED},
+                         {F_GREEN, FOREGROUND_GREEN},
+                         {F_YELLOW, FOREGROUND_YELLOW},
+                         {F_BLUE, FOREGROUND_BLUE},
+                         {F_MAGENTA, FOREGROUND_MAGENTA},
+                         {F_CYAN, FOREGROUND_CYAN},
+                         {F_WHITE, FOREGROUND_WHITE},
+                         {F_DEFAULT, 0}};
+  WORD bg_attrs[9][2] = {{B_DEFAULT, 0},
+                         {B_BLACK, BACKGROUND_BLACK},
+                         {B_RED, BACKGROUND_RED},
+                         {B_GREEN, BACKGROUND_GREEN},
+                         {B_YELLOW, BACKGROUND_YELLOW},
+                         {B_BLUE, BACKGROUND_BLUE},
+                         {B_MAGENTA, BACKGROUND_MAGENTA},
+                         {B_CYAN, BACKGROUND_CYAN},
+                         {B_WHITE, BACKGROUND_WHITE}};
   WORD attr;
   int i, length;
 
@@ -1074,11 +1082,11 @@ TEST_IMPL(tty_set_style) {
     cursor_pos.Y = expect.si.height / 2;
     attr = (expect.si.default_attr & ~FOREGROUND_WHITE) | fg_attrs[i][1];
     make_expect_screen_write(&expect, cursor_pos, HELLO);
-    make_expect_screen_set_attr(&expect, cursor_pos, strlen(HELLO),
-        attr);
+    make_expect_screen_set_attr(&expect, cursor_pos, strlen(HELLO), attr);
 
     set_cursor_position(&tty_out, cursor_pos);
-    snprintf(buffer, sizeof(buffer), "%s%dm%s%sm", CSI, fg_attrs[i][0], HELLO, CSI);
+    snprintf(
+        buffer, sizeof(buffer), "%s%dm%s%sm", CSI, fg_attrs[i][0], HELLO, CSI);
     write_console(&tty_out, buffer);
     capture_screen(&tty_out, &actual);
 
@@ -1093,11 +1101,11 @@ TEST_IMPL(tty_set_style) {
     cursor_pos.Y = expect.si.height / 2;
     attr = (expect.si.default_attr & ~BACKGROUND_WHITE) | bg_attrs[i][1];
     make_expect_screen_write(&expect, cursor_pos, HELLO);
-    make_expect_screen_set_attr(&expect, cursor_pos, strlen(HELLO),
-        attr);
+    make_expect_screen_set_attr(&expect, cursor_pos, strlen(HELLO), attr);
 
     set_cursor_position(&tty_out, cursor_pos);
-    snprintf(buffer, sizeof(buffer), "%s%dm%s%sm", CSI, bg_attrs[i][0], HELLO, CSI);
+    snprintf(
+        buffer, sizeof(buffer), "%s%dm%s%sm", CSI, bg_attrs[i][0], HELLO, CSI);
     write_console(&tty_out, buffer);
     capture_screen(&tty_out, &actual);
 
@@ -1114,12 +1122,17 @@ TEST_IMPL(tty_set_style) {
     attr = expect.si.default_attr & ~FOREGROUND_WHITE & ~BACKGROUND_WHITE;
     attr |= fg_attrs[i][1] | bg_attrs[i][1];
     make_expect_screen_write(&expect, cursor_pos, HELLO);
-    make_expect_screen_set_attr(&expect, cursor_pos, strlen(HELLO),
-        attr);
+    make_expect_screen_set_attr(&expect, cursor_pos, strlen(HELLO), attr);
 
     set_cursor_position(&tty_out, cursor_pos);
-    snprintf(buffer, sizeof(buffer), "%s%d;%dm%s%sm",
-        CSI, bg_attrs[i][0], fg_attrs[i][0], HELLO, CSI);
+    snprintf(buffer,
+             sizeof(buffer),
+             "%s%d;%dm%s%sm",
+             CSI,
+             bg_attrs[i][0],
+             fg_attrs[i][0],
+             HELLO,
+             CSI);
     write_console(&tty_out, buffer);
     capture_screen(&tty_out, &actual);
 
@@ -1134,16 +1147,24 @@ TEST_IMPL(tty_set_style) {
   attr = expect.si.default_attr;
   attr |= FOREGROUND_INTENSITY;
   make_expect_screen_write(&expect, cursor_pos, HELLO);
-  make_expect_screen_set_attr(&expect, cursor_pos, strlen(HELLO),
-      attr);
+  make_expect_screen_set_attr(&expect, cursor_pos, strlen(HELLO), attr);
   cursor_pos.X += strlen(HELLO);
   make_expect_screen_write(&expect, cursor_pos, HELLO);
-  make_expect_screen_set_attr(&expect, cursor_pos, strlen(HELLO),
-      attr);
+  make_expect_screen_set_attr(&expect, cursor_pos, strlen(HELLO), attr);
 
-  snprintf(buffer, sizeof(buffer), "%s%dm%s%s%dm%s%dm%s%s%dm",
-      CSI, F_INTENSITY, HELLO, CSI, F_INTENSITY_OFF1,
-      CSI, F_INTENSITY, HELLO, CSI, F_INTENSITY_OFF2);
+  snprintf(buffer,
+           sizeof(buffer),
+           "%s%dm%s%s%dm%s%dm%s%s%dm",
+           CSI,
+           F_INTENSITY,
+           HELLO,
+           CSI,
+           F_INTENSITY_OFF1,
+           CSI,
+           F_INTENSITY,
+           HELLO,
+           CSI,
+           F_INTENSITY_OFF2);
   write_console(&tty_out, buffer);
   capture_screen(&tty_out, &actual);
 
@@ -1157,11 +1178,16 @@ TEST_IMPL(tty_set_style) {
   attr = expect.si.default_attr;
   attr |= BACKGROUND_INTENSITY;
   make_expect_screen_write(&expect, cursor_pos, HELLO);
-  make_expect_screen_set_attr(&expect, cursor_pos, strlen(HELLO),
-      attr);
+  make_expect_screen_set_attr(&expect, cursor_pos, strlen(HELLO), attr);
 
-  snprintf(buffer, sizeof(buffer), "%s%dm%s%s%dm",
-      CSI, B_INTENSITY, HELLO, CSI, B_INTENSITY_OFF);
+  snprintf(buffer,
+           sizeof(buffer),
+           "%s%dm%s%s%dm",
+           CSI,
+           B_INTENSITY,
+           HELLO,
+           CSI,
+           B_INTENSITY_OFF);
   write_console(&tty_out, buffer);
   capture_screen(&tty_out, &actual);
 
@@ -1180,13 +1206,19 @@ TEST_IMPL(tty_set_style) {
   attr |= fg << 4;
   attr |= bg >> 4;
   make_expect_screen_write(&expect, cursor_pos, HELLO);
-  make_expect_screen_set_attr(&expect, cursor_pos, strlen(HELLO),
-      attr);
+  make_expect_screen_set_attr(&expect, cursor_pos, strlen(HELLO), attr);
   cursor_pos.X += strlen(HELLO);
   make_expect_screen_write(&expect, cursor_pos, HELLO);
 
-  snprintf(buffer, sizeof(buffer), "%s%dm%s%s%dm%s",
-      CSI, INVERSE, HELLO, CSI, INVERSE_OFF, HELLO);
+  snprintf(buffer,
+           sizeof(buffer),
+           "%s%dm%s%s%dm%s",
+           CSI,
+           INVERSE,
+           HELLO,
+           CSI,
+           INVERSE_OFF,
+           HELLO);
   write_console(&tty_out, buffer);
   capture_screen(&tty_out, &actual);
 
@@ -1264,7 +1296,7 @@ TEST_IMPL(tty_full_reset) {
   uv_tty_t tty_out;
   uv_loop_t* loop;
   char buffer[1024];
-  struct captured_screen actual = { 0 }, expect = { 0 };
+  struct captured_screen actual = {0}, expect = {0};
   COORD cursor_pos;
   DWORD saved_cursor_size;
   BOOL saved_cursor_visibility;
@@ -1278,11 +1310,11 @@ TEST_IMPL(tty_full_reset) {
   cursor_pos.X = expect.si.width;
   cursor_pos.Y = expect.si.height;
   set_cursor_position(&tty_out, cursor_pos);
-  snprintf(buffer, sizeof(buffer), "%s%d;%dm%s",
-      CSI, F_CYAN, B_YELLOW, HELLO);
+  snprintf(buffer, sizeof(buffer), "%s%d;%dm%s", CSI, F_CYAN, B_YELLOW, HELLO);
   saved_cursor_size = get_cursor_size(&tty_out);
-  set_cursor_size(&tty_out, saved_cursor_size == CURSOR_SIZE_LARGE ?
-      CURSOR_SIZE_SMALL : CURSOR_SIZE_LARGE);
+  set_cursor_size(&tty_out,
+                  saved_cursor_size == CURSOR_SIZE_LARGE ? CURSOR_SIZE_SMALL
+                                                         : CURSOR_SIZE_LARGE);
   saved_cursor_visibility = get_cursor_visibility(&tty_out);
   set_cursor_visibility(&tty_out, saved_cursor_visibility ? FALSE : TRUE);
   write_console(&tty_out, buffer);
@@ -1309,7 +1341,7 @@ TEST_IMPL(tty_escape_sequence_processing) {
   COORD cursor_pos, cursor_pos_old;
   DWORD saved_cursor_size;
   char buffer[1024];
-  struct captured_screen actual = { 0 }, expect = { 0 };
+  struct captured_screen actual = {0}, expect = {0};
   int dir;
 
   loop = uv_default_loop();
@@ -1360,8 +1392,15 @@ TEST_IMPL(tty_escape_sequence_processing) {
   cursor_pos.Y = 1;
   set_cursor_position(&tty_out, cursor_pos);
   capture_screen(&tty_out, &expect);
-  snprintf(buffer, sizeof(buffer), "%s0@%s%s>~%s%s?~%s",
-      CSI, HELLO, CSI, HELLO, CSI, HELLO);
+  snprintf(buffer,
+           sizeof(buffer),
+           "%s0@%s%s>~%s%s?~%s",
+           CSI,
+           HELLO,
+           CSI,
+           HELLO,
+           CSI,
+           HELLO);
   make_expect_screen_write(&expect, cursor_pos, HELLO);
   cursor_pos.X += strlen(HELLO);
   make_expect_screen_write(&expect, cursor_pos, HELLO);
@@ -1411,8 +1450,14 @@ TEST_IMPL(tty_escape_sequence_processing) {
   set_cursor_position(&tty_out, cursor_pos);
   capture_screen(&tty_out, &expect);
   make_expect_screen_write(&expect, cursor_pos, HELLO);
-  snprintf(buffer, sizeof(buffer), "%s^\"%s\\\"%s\"%s%s",
-      ESC, HELLO, HELLO, ST, HELLO);
+  snprintf(buffer,
+           sizeof(buffer),
+           "%s^\"%s\\\"%s\"%s%s",
+           ESC,
+           HELLO,
+           HELLO,
+           ST,
+           HELLO);
   write_console(&tty_out, buffer);
   capture_screen(&tty_out, &actual);
   ASSERT(compare_screen(&tty_out, &actual, &expect));
@@ -1422,8 +1467,15 @@ TEST_IMPL(tty_escape_sequence_processing) {
   set_cursor_position(&tty_out, cursor_pos);
   capture_screen(&tty_out, &expect);
   make_expect_screen_write(&expect, cursor_pos, HELLO);
-  snprintf(buffer, sizeof(buffer), "%s_\"%s%s%s\"%s%s",
-      ESC, HELLO, ST, HELLO, BEL, HELLO);
+  snprintf(buffer,
+           sizeof(buffer),
+           "%s_\"%s%s%s\"%s%s",
+           ESC,
+           HELLO,
+           ST,
+           HELLO,
+           BEL,
+           HELLO);
   write_console(&tty_out, buffer);
   capture_screen(&tty_out, &actual);
   ASSERT(compare_screen(&tty_out, &actual, &expect));
@@ -1436,8 +1488,15 @@ TEST_IMPL(tty_escape_sequence_processing) {
   make_expect_screen_write(&expect, cursor_pos, HELLO);
   cursor_pos.X += strlen(HELLO);
   make_expect_screen_write(&expect, cursor_pos, HELLO);
-  snprintf(buffer, sizeof(buffer), "%s%s@%s%s%s~%s",
-      ESC, CSI, HELLO, ESC, CSI, HELLO);
+  snprintf(buffer,
+           sizeof(buffer),
+           "%s%s@%s%s%s~%s",
+           ESC,
+           CSI,
+           HELLO,
+           ESC,
+           CSI,
+           HELLO);
   write_console(&tty_out, buffer);
   capture_screen(&tty_out, &actual);
   ASSERT(compare_screen(&tty_out, &actual, &expect));
@@ -1456,16 +1515,29 @@ TEST_IMPL(tty_escape_sequence_processing) {
   set_cursor_position(&tty_out, cursor_pos);
   capture_screen(&tty_out, &expect);
   make_expect_screen_write(&expect, cursor_pos, HELLO);
-  snprintf(buffer, sizeof(buffer), "%s%d;%d;%d;%d;%dm%s%sm",
-      CSI, F_RED, F_INTENSITY, INVERSE, B_CYAN, B_INTENSITY_OFF, HELLO, CSI);
+  snprintf(buffer,
+           sizeof(buffer),
+           "%s%d;%d;%d;%d;%dm%s%sm",
+           CSI,
+           F_RED,
+           F_INTENSITY,
+           INVERSE,
+           B_CYAN,
+           B_INTENSITY_OFF,
+           HELLO,
+           CSI);
   write_console(&tty_out, buffer);
   capture_screen(&tty_out, &actual);
   ASSERT(compare_screen(&tty_out, &actual, &expect));
 
   /* In the case of DECSCUSR, the others are ignored */
   set_cursor_to_home(&tty_out);
-  snprintf(buffer, sizeof(buffer), "%s%d;%d H",
-      CSI, expect.si.height / 2, expect.si.width / 2);
+  snprintf(buffer,
+           sizeof(buffer),
+           "%s%d;%d H",
+           CSI,
+           expect.si.height / 2,
+           expect.si.width / 2);
   write_console(&tty_out, buffer);
   get_cursor_position(&tty_out, &cursor_pos);
   ASSERT(cursor_pos.X == 1);
@@ -1492,8 +1564,12 @@ TEST_IMPL(tty_escape_sequence_processing) {
   cursor_pos_old.X = expect.si.width / 2;
   cursor_pos_old.Y = expect.si.height / 2;
   set_cursor_position(&tty_out, cursor_pos_old);
-  snprintf(buffer, sizeof(buffer), "%s??%d;%df",
-      CSI, expect.si.height / 4, expect.si.width / 4);
+  snprintf(buffer,
+           sizeof(buffer),
+           "%s??%d;%df",
+           CSI,
+           expect.si.height / 4,
+           expect.si.width / 4);
   write_console(&tty_out, buffer);
   get_cursor_position(&tty_out, &cursor_pos);
   ASSERT(cursor_pos.X = cursor_pos_old.X);
@@ -1533,4 +1609,3 @@ TEST_IMPL(tty_escape_sequence_processing) {
   MAKE_VALGRIND_HAPPY();
   return 0;
 }
-
